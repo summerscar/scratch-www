@@ -11,7 +11,8 @@
     "smoke-sauce": "SMOKE_REMOTE=true tap ./test/integration/smoke-testing/*.js --timeout=60000",
     "watch": "make watch",
     "build": "make build",
-    "dev": "make watch && make start &"
+    "dev": "make watch && make start &",
+    "deploy": "scp -r ./build/* root@173.82.114.233:/www/wwwroot/scratch3.summerscar.me"
   },
   "repository": {
     "type": "git",
