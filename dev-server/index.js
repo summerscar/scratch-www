@@ -1,6 +1,7 @@
 var express = require('express');
 var proxy = require('express-http-proxy');
 var webpackDevMiddleware = require('webpack-dev-middleware');
+var proxyMiddleware = require('http-proxy-middleware');
 var webpack = require('webpack');
 
 var compiler = webpack(require('../webpack.config.js'));
@@ -12,6 +13,29 @@ var routes = require('../src/routes.json').concat(require('../src/routes-dev.jso
 // Create server
 var app = express();
 app.disable('x-powered-by');
+
+let proxyTable = {
+    '/proxy': {
+        target: 'https://api.scratch.mit.edu/',
+        changeOrigin: true,
+        secure: true,
+        pathRewrite: {
+            '^/proxy': '/proxy'
+        },
+        headers: {
+            Referer: 'https://api.scratch.mit.edu/'
+        }
+    }
+};
+
+// proxy api requests
+Object.keys(proxyTable).forEach(function (context) {
+    var options = proxyTable[context];
+    if (typeof options === 'string') {
+        options = {target: options};
+    }
+    app.use(proxyMiddleware(options.filter || context, options));
+});
 
 // Server setup
 app.use(log());
