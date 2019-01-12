@@ -70,6 +70,7 @@ const PreviewPresentation = ({
     isFullScreen,
     isLoggedIn,
     isNewScratcher,
+    isProjectLoaded,
     isRemixing,
     isScratcher,
     isShared,
@@ -88,8 +89,10 @@ const PreviewPresentation = ({
     onFavoriteClicked,
     onGreenFlag,
     onLoadMore,
+    onLoadMoreReplies,
     onLoveClicked,
     onOpenAdminPanel,
+    onProjectLoaded,
     onRemix,
     onRemixing,
     onReportClicked,
@@ -123,6 +126,10 @@ const PreviewPresentation = ({
 }) => {
     const shareDate = ((projectInfo.history && projectInfo.history.shared)) ? projectInfo.history.shared : '';
     const revisedDate = ((projectInfo.history && projectInfo.history.modified)) ? projectInfo.history.modified : '';
+    const showInstructions = editable || projectInfo.instructions ||
+        (!projectInfo.instructions && !projectInfo.description); // show if both are empty
+    const showNotesAndCredits = editable || projectInfo.description ||
+        (!projectInfo.instructions && !projectInfo.description); // show if both are empty
 
     // Allow embedding html in banner messages coming from the server
     const embedCensorMessage = message => (
@@ -246,10 +253,11 @@ const PreviewPresentation = ({
                                             className={classNames([
                                                 'remix-button',
                                                 {
-                                                    remixing: isRemixing,
-                                                    spin: isRemixing
+                                                    disabled: isRemixing || !isProjectLoaded,
+                                                    remixing: isRemixing
                                                 }
                                             ])}
+                                            disabled={isRemixing || !isProjectLoaded}
                                             title={intl.formatMessage({id: 'project.remixButton.altText'})}
                                             onClick={onRemix}
                                         >
@@ -297,6 +305,7 @@ const PreviewPresentation = ({
                                     projectHost={projectHost}
                                     projectId={projectId}
                                     onGreenFlag={onGreenFlag}
+                                    onProjectLoaded={onProjectLoaded}
                                     onRemixing={onRemixing}
                                     onUpdateProjectId={onUpdateProjectId}
                                     onUpdateProjectThumbnail={onUpdateProjectThumbnail}
@@ -348,89 +357,91 @@ const PreviewPresentation = ({
                                         </FlexRow>
                                     </FlexRow>
                                 </MediaQuery>
-                                <div className="description-block">
-                                    <div className="project-textlabel">
-                                        <FormattedMessage id="project.instructionsLabel" />
-                                    </div>
-                                    {editable ?
-                                        <Formsy
-                                            className="project-description-form"
-                                            onKeyPress={onKeyPress}
-                                        >
-                                            <InplaceInput
-                                                className={classNames(
-                                                    'project-description-edit',
-                                                    {remixes: parentInfo && parentInfo.author}
-                                                )}
-                                                handleUpdate={onUpdate}
-                                                name="instructions"
-                                                placeholder={intl.formatMessage({
-                                                    id: 'project.descriptionPlaceholder'
-                                                })}
-                                                type="textarea"
-                                                validationErrors={{
-                                                    maxLength: intl.formatMessage({
-                                                        id: 'project.descriptionMaxLength'
-                                                    })
-                                                }}
-                                                validations={{
-                                                    // TODO: actual 5000
-                                                    maxLength: 1000
-                                                }}
-                                                value={projectInfo.instructions}
-                                            />
-                                        </Formsy> :
-                                        <div className="project-description">
-                                            {decorateText(projectInfo.instructions, {
-                                                usernames: true,
-                                                hashtags: true,
-                                                scratchLinks: false
-                                            })}
+                                {showInstructions && (
+                                    <div className="description-block">
+                                        <div className="project-textlabel">
+                                            <FormattedMessage id="project.instructionsLabel" />
                                         </div>
-                                    }
-                                </div>
-                                <div className="description-block">
-                                    <div className="project-textlabel">
-                                        <FormattedMessage id="project.notesAndCreditsLabel" />
-                                    </div>
-                                    {editable ?
-                                        <Formsy
-                                            className="project-description-form"
-                                            onKeyPress={onKeyPress}
-                                        >
-                                            <InplaceInput
-                                                className={classNames(
-                                                    'project-description-edit',
-                                                    'last',
-                                                    {remixes: parentInfo && parentInfo.author}
-                                                )}
-                                                handleUpdate={onUpdate}
-                                                name="description"
-                                                placeholder={intl.formatMessage({
-                                                    id: 'project.notesPlaceholder'
+                                        {editable ?
+                                            <Formsy
+                                                className="project-description-form"
+                                                onKeyPress={onKeyPress}
+                                            >
+                                                <InplaceInput
+                                                    className={classNames(
+                                                        'project-description-edit',
+                                                        {remixes: parentInfo && parentInfo.author}
+                                                    )}
+                                                    handleUpdate={onUpdate}
+                                                    name="instructions"
+                                                    placeholder={intl.formatMessage({
+                                                        id: 'project.descriptionPlaceholder'
+                                                    })}
+                                                    type="textarea"
+                                                    validationErrors={{
+                                                        maxLength: intl.formatMessage({
+                                                            id: 'project.descriptionMaxLength'
+                                                        })
+                                                    }}
+                                                    validations={{
+                                                        maxLength: 5000
+                                                    }}
+                                                    value={projectInfo.instructions}
+                                                />
+                                            </Formsy> :
+                                            <div className="project-description">
+                                                {decorateText(projectInfo.instructions, {
+                                                    usernames: true,
+                                                    hashtags: true,
+                                                    scratchLinks: false
                                                 })}
-                                                type="textarea"
-                                                validationErrors={{
-                                                    maxLength: intl.formatMessage({
-                                                        id: 'project.descriptionMaxLength'
-                                                    })
-                                                }}
-                                                validations={{
-                                                    // TODO: actual 5000
-                                                    maxLength: 1000
-                                                }}
-                                                value={projectInfo.description}
-                                            />
-                                        </Formsy> :
-                                        <div className="project-description last">
-                                            {decorateText(projectInfo.description, {
-                                                usernames: true,
-                                                hashtags: true,
-                                                scratchLinks: false
-                                            })}
+                                            </div>
+                                        }
+                                    </div>
+                                )}
+                                {showNotesAndCredits && (
+                                    <div className="description-block">
+                                        <div className="project-textlabel">
+                                            <FormattedMessage id="project.notesAndCreditsLabel" />
                                         </div>
-                                    }
-                                </div>
+                                        {editable ?
+                                            <Formsy
+                                                className="project-description-form"
+                                                onKeyPress={onKeyPress}
+                                            >
+                                                <InplaceInput
+                                                    className={classNames(
+                                                        'project-description-edit',
+                                                        'last',
+                                                        {remixes: parentInfo && parentInfo.author}
+                                                    )}
+                                                    handleUpdate={onUpdate}
+                                                    name="description"
+                                                    placeholder={intl.formatMessage({
+                                                        id: 'project.notesPlaceholder'
+                                                    })}
+                                                    type="textarea"
+                                                    validationErrors={{
+                                                        maxLength: intl.formatMessage({
+                                                            id: 'project.descriptionMaxLength'
+                                                        })
+                                                    }}
+                                                    validations={{
+                                                        maxLength: 5000
+                                                    }}
+                                                    value={projectInfo.description}
+                                                />
+                                            </Formsy> :
+                                            <div className="project-description last">
+                                                {decorateText(projectInfo.description, {
+                                                    usernames: true,
+                                                    hashtags: true,
+                                                    scratchLinks: false
+                                                })}
+                                            </div>
+                                        }
+                                    </div>
+                                )}
                                 {/*  eslint-enable max-len */}
                             </FlexRow>
                         </FlexRow>
@@ -514,7 +525,7 @@ const PreviewPresentation = ({
                                         <FlexRow className="comments-root-reply">
                                             {projectInfo.comments_allowed ? (
                                                 isLoggedIn ? (
-                                                    <ComposeComment
+                                                    isShared && <ComposeComment
                                                         projectId={projectId}
                                                         onAddComment={onAddComment}
                                                     />
@@ -535,7 +546,7 @@ const PreviewPresentation = ({
                                             <TopLevelComment
                                                 author={comment.author}
                                                 canDelete={canDeleteComments}
-                                                canReply={isLoggedIn && projectInfo.comments_allowed}
+                                                canReply={isLoggedIn && projectInfo.comments_allowed && isShared}
                                                 canReport={isLoggedIn}
                                                 canRestore={canRestoreComments}
                                                 content={comment.content}
@@ -544,12 +555,14 @@ const PreviewPresentation = ({
                                                 highlightedCommentId={singleCommentId}
                                                 id={comment.id}
                                                 key={comment.id}
+                                                moreRepliesToLoad={comment.moreRepliesToLoad}
                                                 parentId={comment.parent_id}
                                                 projectId={projectId}
                                                 replies={replies && replies[comment.id] ? replies[comment.id] : []}
                                                 visibility={comment.visibility}
                                                 onAddComment={onAddComment}
                                                 onDelete={onDeleteComment}
+                                                onLoadMoreReplies={onLoadMoreReplies}
                                                 onReport={onReportComment}
                                                 onRestore={onRestoreComment}
                                             />
@@ -573,8 +586,14 @@ const PreviewPresentation = ({
                                     </FlexRow>
                                 </div>
                                 <FlexRow className="column">
-                                    <RemixList remixes={remixes} />
-                                    <StudioList studios={projectStudios} />
+                                    <RemixList
+                                        projectId={projectId}
+                                        remixes={remixes}
+                                    />
+                                    <StudioList
+                                        projectId={projectId}
+                                        studios={projectStudios}
+                                    />
                                 </FlexRow>
                             </FlexRow>
                         </div>
@@ -611,6 +630,7 @@ PreviewPresentation.propTypes = {
     isFullScreen: PropTypes.bool,
     isLoggedIn: PropTypes.bool,
     isNewScratcher: PropTypes.bool,
+    isProjectLoaded: PropTypes.bool,
     isRemixing: PropTypes.bool,
     isScratcher: PropTypes.bool,
     isShared: PropTypes.bool,
@@ -632,8 +652,10 @@ PreviewPresentation.propTypes = {
     onFavoriteClicked: PropTypes.func,
     onGreenFlag: PropTypes.func,
     onLoadMore: PropTypes.func,
+    onLoadMoreReplies: PropTypes.func,
     onLoveClicked: PropTypes.func,
     onOpenAdminPanel: PropTypes.func,
+    onProjectLoaded: PropTypes.func,
     onRemix: PropTypes.func,
     onRemixing: PropTypes.func,
     onReportClicked: PropTypes.func.isRequired,

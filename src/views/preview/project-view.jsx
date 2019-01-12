@@ -38,7 +38,11 @@ const localStorageAvailable = 'localStorage' in window && window.localStorage !=
 const Sentry = require('@sentry/browser');
 if (`${process.env.SENTRY_DSN}` !== '') {
     Sentry.init({
-        dsn: `${process.env.SENTRY_DSN}`
+        dsn: `${process.env.SENTRY_DSN}`,
+        // Do not collect global onerror, only collect specifically from React error boundaries.
+        // TryCatch plugin also includes errors from setTimeouts (i.e. the VM)
+        integrations: integrations => integrations.filter(i =>
+            !(i.name === 'GlobalHandlers' || i.name === 'TryCatch'))
     });
     window.Sentry = Sentry; // Allow GUI access to Sentry via window
 }
@@ -56,6 +60,7 @@ class Preview extends React.Component {
             'handleToggleStudio',
             'handleFavoriteToggle',
             'handleLoadMore',
+            'handleLoadMoreReplies',
             'handleLoveToggle',
             'handleMessage',
             'handlePopState',
@@ -70,6 +75,7 @@ class Preview extends React.Component {
             'handleAddToStudioClick',
             'handleAddToStudioClose',
             'handleGreenFlag',
+            'handleProjectLoaded',
             'handleRemix',
             'handleSeeAllComments',
             'handleSeeInside',
@@ -104,6 +110,7 @@ class Preview extends React.Component {
             clientLoved: false,
             extensions: [],
             favoriteCount: 0,
+            isProjectLoaded: false,
             isRemixing: false,
             invalidProject: parts.length === 1,
             justRemixed: false,
@@ -378,6 +385,11 @@ class Preview extends React.Component {
             this.props.setFullScreen(fullScreen);
         }
     }
+    handleProjectLoaded () {
+        // Currently project view only needs to know when the project becomes loaded. It
+        // does not currently handle (or need to handle) the case where a project becomes unloaded.
+        this.setState({isProjectLoaded: true});
+    }
     pushHistory (push) {
         // update URI to match mode
         const idPath = this.state.projectId ? `${this.state.projectId}/` : '';
@@ -435,6 +447,11 @@ class Preview extends React.Component {
     handleLoadMore () {
         this.props.getTopLevelComments(this.state.projectId, this.props.comments.length,
             this.props.isAdmin, this.props.user && this.props.user.token);
+    }
+    handleLoadMoreReplies (commentId, offset) {
+        this.props.getMoreReplies(this.state.projectId, commentId, offset,
+            this.props.isAdmin, this.props.user && this.props.user.token
+        );
     }
     handleLoveToggle () {
         if (!this.props.lovedLoaded) return;
@@ -607,6 +624,7 @@ class Preview extends React.Component {
                             isFullScreen={this.state.isFullScreen}
                             isLoggedIn={this.props.isLoggedIn}
                             isNewScratcher={this.props.isNewScratcher}
+                            isProjectLoaded={this.state.isProjectLoaded}
                             isRemixing={this.state.isRemixing}
                             isScratcher={this.props.isScratcher}
                             isShared={this.props.isShared}
@@ -640,8 +658,10 @@ class Preview extends React.Component {
                             onFavoriteClicked={this.handleFavoriteToggle}
                             onGreenFlag={this.handleGreenFlag}
                             onLoadMore={this.handleLoadMore}
+                            onLoadMoreReplies={this.handleLoadMoreReplies}
                             onLoveClicked={this.handleLoveToggle}
                             onOpenAdminPanel={this.handleOpenAdminPanel}
+                            onProjectLoaded={this.handleProjectLoaded}
                             onRemix={this.handleRemix}
                             onRemixing={this.handleIsRemixing}
                             onReportClicked={this.handleReportClick}
@@ -687,6 +707,7 @@ class Preview extends React.Component {
                             onGreenFlag={this.handleGreenFlag}
                             onLogOut={this.props.handleLogOut}
                             onOpenRegistration={this.props.handleOpenRegistration}
+                            onProjectLoaded={this.handleProjectLoaded}
                             onRemixing={this.handleIsRemixing}
                             onSetLanguage={this.handleSetLanguage}
                             onShare={this.handleShare}
@@ -732,6 +753,7 @@ Preview.propTypes = {
     getCuratedStudios: PropTypes.func.isRequired,
     getFavedStatus: PropTypes.func.isRequired,
     getLovedStatus: PropTypes.func.isRequired,
+    getMoreReplies: PropTypes.func.isRequired,
     getOriginalInfo: PropTypes.func.isRequired,
     getParentInfo: PropTypes.func.isRequired,
     getProjectInfo: PropTypes.func.isRequired,
@@ -944,11 +966,14 @@ const mapDispatchToProps = dispatch => ({
     getCommentById: (projectId, commentId, isAdmin, token) => {
         dispatch(previewActions.getCommentById(projectId, commentId, isAdmin, token));
     },
+    getMoreReplies: (projectId, commentId, offset, isAdmin, token) => {
+        dispatch(previewActions.getReplies(projectId, [commentId], offset, isAdmin, token));
+    },
     getFavedStatus: (id, username, token) => {
         dispatch(previewActions.getFavedStatus(id, username, token));
     },
     setFavedStatus: (faved, id, username, token) => {
-        dispatch(previewActions.setFavedStatus(faved, id, username, token));
+        dispatch(previewActions.setFavedStatusViaProxy(faved, id, username, token));
     },
     getLovedStatus: (id, username, token) => {
         dispatch(previewActions.getLovedStatus(id, username, token));
@@ -957,7 +982,7 @@ const mapDispatchToProps = dispatch => ({
         dispatch(previewActions.logProjectView(id, authorUsername, token));
     },
     setLovedStatus: (loved, id, username, token) => {
-        dispatch(previewActions.setLovedStatus(loved, id, username, token));
+        dispatch(previewActions.setLovedStatusViaProxy(loved, id, username, token));
     },
     shareProject: (id, token) => {
         dispatch(previewActions.shareProject(id, token));
