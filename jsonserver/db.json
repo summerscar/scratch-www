@@ -1,0 +1,49 @@
+{
+    "session": {
+        "user": {
+            "id": 34455896,
+            "banned": false,
+            "username": "summerscar",
+            "token": "b6fc9fabadb54fe9bfafc13374274bf6:QCdVrrobqq-hxtjRUhrl73MGl0M",
+            "thumbnailUrl": "//cdn2.scratch.mit.edu/get_image/user/default_32x32.png",
+            "dateJoined": "2018-07-27T08:15:32",
+            "email": "shen.yus@163.com"
+        },
+        "permissions": {
+            "admin": false,
+            "scratcher": false,
+            "new_scratcher": true,
+            "social": true,
+            "educator": false,
+            "educator_invitee": false,
+            "student": false
+        },
+        "flags": {
+            "must_reset_password": false,
+            "must_complete_registration": false,
+            "has_outstanding_email_confirmation": false,
+            "show_welcome": true,
+            "confirm_email_banner": true,
+            "unsupported_browser_banner": true
+        }
+    },
+    "activity": [
+
+    ],
+    "projects": [
+
+    ],
+    "stuprojects": [
+
+    ],
+    "loves": [
+
+    ],
+    "count": [],
+    "studios": [
+
+    ],
+    "news": [
+        
+    ]
+}

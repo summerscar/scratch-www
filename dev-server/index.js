@@ -25,6 +25,30 @@ let proxyTable = {
         headers: {
             Referer: 'https://api.scratch.mit.edu/'
         }
+    },
+    '/session': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: true,
+        pathRewrite: {
+            '^/session': '/session'
+        }
+    },
+    '/user': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: true,
+        pathRewrite: {
+            '^/user': '/user'
+        }
+    },
+    '/news': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: true,
+        pathRewrite: {
+            '^/news': '/news'
+        }
     }
 };
 
@@ -38,7 +62,7 @@ Object.keys(proxyTable).forEach(function (context) {
 });
 
 // Server setup
-app.use(log());
+// app.use(log());
 
 // Bind routes
 routes.forEach(route => {

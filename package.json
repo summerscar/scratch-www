@@ -12,7 +12,8 @@
     "watch": "make watch",
     "build": "make build",
     "dev": "make watch && make start &",
-    "deploy": "scp -r ./build/* root@173.82.114.233:/www/wwwroot/scratch3.summerscar.me"
+    "deploy": "scp -r ./build/* root@173.82.114.233:/www/wwwroot/scratch3.summerscar.me",
+    "server": "json-server --watch jsonserver/db.json --routes jsonserver/routes.json"
   },
   "repository": {
     "type": "git",

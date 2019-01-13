@@ -1,0 +1,9 @@
+{
+    "/users/summerscar/following/users/activity?limit=:id": "/activity?_limit=:id",
+    "/users/summerscar/following/users/projects": "/projects",
+    "/users/summerscar/following/studios/projects": "/stuprojects",
+    "/users/summerscar/following/users/loves": "/loves",
+    "/users/summerscar/following/studios": "/studios",
+    "/users/summerscar/messages/count": "/count",
+    "/news?limit=:id": "/news?_limit=:id"
+}
